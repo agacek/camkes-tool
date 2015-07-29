@@ -79,7 +79,7 @@ int /*? me.from_interface.name ?*/__run(void) {
 /*- set buffer = base -*/
 /*- set sizes = [None] -*/
 /*- if userspace_ipc -*/
-    /*- do sizes.__setitem__(0, 'PAGE_SIZE_4K') -*/
+    /*- do sizes.__setitem__(0, '2 * PAGE_SIZE_4K') -*/
 /*- else -*/
     /*- do sizes.__setitem__(0, 'seL4_MsgMaxLength * sizeof(seL4_Word)') -*/
 /*- endif -*/
