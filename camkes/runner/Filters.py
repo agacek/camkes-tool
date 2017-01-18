@@ -17,7 +17,7 @@ from __future__ import absolute_import, division, print_function, \
 from camkes.internal.seven import cmp, filter, map, zip
 
 import os, re, six, subprocess
-from capdl import seL4_FrameObject, Cap, CNode, Frame, TCB, SC, page_sizes, lookup_architecture
+from capdl import seL4_FrameObject, Cap, CNode, Frame, TCB, SC, page_sizes, lookup_architecture, Object
 from capdl.util import IA32Arch, X64Arch
 from camkes.internal.memoization import memoize
 from .NameMangling import Perspective
@@ -836,6 +836,20 @@ def remove_tcb_caps(cspaces, options, **_):
                     if v is not None and isinstance(v.referent, TCB)]:
                 del space.cnode[slot]
 
+def add_perfmon_tcb_caps(cspaces, options, **_):
+    '''Add all TCB caps to PerfMon component.'''
+    if 'perfmon' in cspaces:
+        tcbs = set()
+        for cs in cspaces.values():
+            for cap in cs.cnode.slots.values():
+                if cap and isinstance(cap.referent, Object.TCB):
+                    tcbs.add(cap.referent)
+
+        perfmon = cspaces['perfmon']
+        for tcb in tcbs:
+            assert perfmon.alloc(tcb) >= 0
+
+
 CAPDL_FILTERS = [
     set_tcb_info,
     set_tcb_caps,
@@ -847,6 +861,7 @@ CAPDL_FILTERS = [
     tcb_properties,
     tcb_domains,
     remove_tcb_caps,
+    add_perfmon_tcb_caps,
     sc_default_properties,
     sc_properties,
 ]
