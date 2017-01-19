@@ -591,6 +591,29 @@ def main(argv, out, err):
                 except TemplateError as inst:
                     die('While rendering %s: %s' % (i.name, inst))
 
+    # Perform any tcb_caps header generation. This needs to happen last
+    # as this template needs to run after all other capabilities have been
+    # allocated
+    for i in assembly.composition.instances:
+        # Don't generate any code for hardware components.
+        if i.type.hardware:
+            continue
+        assert i.address_space in cspaces
+        for t in ('%s/all_tcb_caps' % i.name,):
+            try:
+                template = templates.lookup(t, i)
+                g = ''
+                if template:
+                    g = r.render(i, assembly, template, obj_space, cspaces[i.address_space],
+                        shmem, options=options, my_pd=pds[i.address_space])
+                save(t, g)
+                if options.item == t:
+                    if not template:
+                        log.warning('Warning: no template for %s' % options.item)
+                    done(g)
+            except TemplateError as inst:
+                die('While rendering %s: %s' % (i.name, inst))
+
     # Derive a set of usable ELF objects from the filenames we were passed.
     elfs = {}
     for e in options.elf:

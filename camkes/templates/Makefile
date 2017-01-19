@@ -117,6 +117,9 @@ endif
     /*? rule_gen('$(abspath ${BUILD_DIR})/src/%s/generated/camkes.simple.c' % i.name, ' '.join(imported), '%s/simple' % i.name, i.name) ?*/
 /*- endif -*/
 /*? rule_gen('$(abspath ${BUILD_DIR})/include/%s/generated/camkes.h' % i.name, ' '.join(imported), '%s/header' % i.name) ?*/
+/*- if configuration[i.name].get('all_tcb_caps') -*/
+    /*? rule_gen('$(abspath ${BUILD_DIR})/include/%s/generated/all_tcb_caps.h' % i.name, ' '.join(imported), '%s/all_tcb_caps' % i.name) ?*/
+/*- endif -*/
 /*- endfor -*/
 
 # Connection code generation.
@@ -322,10 +325,15 @@ endif
 # Each component file may depend on the per-component generated header.
 /*- for i in instances if not i.type.hardware -*/
     /*- set header = '$(abspath ${BUILD_DIR})/include/%s/generated/camkes.h' % i.name -*/
-$(/*? i.name ?*/_CFILES:%.c=%.o): /*? header ?*/
-$(/*? i.name ?*/_CXXFILES:%.cxx=%.o): /*? header ?*/
+    /*- if configuration[i.name].get('all_tcb_caps') -*/
+        /*- set all_tcb_caps = '$(abspath ${BUILD_DIR})/include/%s/generated/all_tcb_caps.h' % i.name -*/
+    /*- else -*/
+        /*- set all_tcb_caps = '' -*/
+    /*- endif -*/
+$(/*? i.name ?*/_CFILES:%.c=%.o): /*? header ?*/ /*? all_tcb_caps ?*/
+$(/*? i.name ?*/_CXXFILES:%.cxx=%.o): /*? header ?*/ /*? all_tcb_caps ?*/
 # In case we are running CPP separately:
-$(/*? i.name ?*/_CFILES:%.c=%.c_pp): /*? header ?*/
+$(/*? i.name ?*/_CFILES:%.c=%.c_pp): /*? header ?*/ /*? all_tcb_caps ?*/
 /*- endfor -*/
 
 # Each (generated or static) component file compilation may depend on the

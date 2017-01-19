@@ -33,6 +33,7 @@ TEMPLATES = {
             'header':'component.template.h',
             'simple':'component.simple.c',
             'linker':'linker.lds',
+            'all_tcb_caps':'component.all_tcb_caps.h',
         },
         Guard(lambda x: isinstance(x, Connection) and x.type.name == 'seL4RPC'):{
             # Direction
