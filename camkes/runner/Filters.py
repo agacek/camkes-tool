@@ -73,14 +73,16 @@ def get_symbol_size(elf, symbol):
 def get_elf_arch(elf):
     return elf[1].get_arch()
 
+def is_local_tcb(v):
+    return v is not None and isinstance(v.referent, TCB) and not hasattr(v, 'external_tcb')
+
 def set_tcb_info(cspaces, obj_space, elfs, options, **_):
     '''Set relevant extra info for TCB objects.'''
     arch = lookup_architecture(options.architecture)
 
     for group, space in cspaces.items():
         cnode = space.cnode
-        for index, tcb in [(k, v.referent) for (k, v) in cnode.slots.items()
-                if v is not None and isinstance(v.referent, TCB)]:
+        for index, tcb in [(k, v.referent) for (k, v) in cnode.slots.items() if is_local_tcb(v)]:
 
             perspective = Perspective(group=group, tcb=tcb.name)
 
@@ -308,8 +310,7 @@ def set_tcb_caps(ast, obj_space, cspaces, elfs, options, **_):
 
     for group, space in cspaces.items():
         cnode = space.cnode
-        for index, tcb in [(k, v.referent) for (k, v) in cnode.slots.items()
-                if v is not None and isinstance(v.referent, TCB)]:
+        for index, tcb in [(k, v.referent) for (k, v) in cnode.slots.items() if is_local_tcb(v)]:
 
             perspective = Perspective(tcb=tcb.name, group=group)
 
@@ -600,8 +601,7 @@ def guard_pages(obj_space, cspaces, elfs, options, **_):
     arch = lookup_architecture(options.architecture)
     for group, space in cspaces.items():
         cnode = space.cnode
-        for index, tcb in [(k, v.referent) for (k, v) in cnode.slots.items()
-                if v is not None and isinstance(v.referent, TCB)]:
+        for index, tcb in [(k, v.referent) for (k, v) in cnode.slots.items() if is_local_tcb(v)]:
 
             perspective = Perspective(group=group, tcb=tcb.name)
 
@@ -751,8 +751,7 @@ def tcb_properties(ast, cspaces, options, **_):
 
     for group, space in cspaces.items():
         cnode = space.cnode
-        for tcb in [v.referent for v in cnode.slots.values()
-                if v is not None and isinstance(v.referent, TCB)]:
+        for tcb in [v.referent for v in cnode.slots.values() if is_local_tcb(v)]:
 
             assert options.debug_fault_handlers or not \
                 is_fault_handler(tcb.name), 'fault handler threads present ' \
@@ -832,8 +831,7 @@ def remove_tcb_caps(cspaces, options, **_):
     '''Remove all TCB caps in the system if requested by the user.'''
     if not options.fprovide_tcb_caps:
         for space in cspaces.values():
-            for slot in [k for (k, v) in space.cnode.slots.items()
-                    if v is not None and isinstance(v.referent, TCB)]:
+            for slot in [k for (k, v) in space.cnode.slots.items() if is_local_tcb(v)]:
                 del space.cnode[slot]
 
 CAPDL_FILTERS = [

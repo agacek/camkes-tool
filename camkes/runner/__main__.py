@@ -46,7 +46,7 @@ import argparse, collections, functools, jinja2, locale, numbers, os, re, \
     six, sqlite3, string, traceback
 
 from capdl import seL4_CapTableObject, ObjectAllocator, CSpaceAllocator, \
-    ELF, lookup_architecture
+    ELF, lookup_architecture, Object
 
 from camkes.parser import parse_file, ParseError
 
@@ -591,14 +591,25 @@ def main(argv, out, err):
                 except TemplateError as inst:
                     die('While rendering %s: %s' % (i.name, inst))
 
-    # Perform any tcb_caps header generation. This needs to happen last
+    # Perform any all_tcb_caps header generation. This needs to happen last
     # as this template needs to run after all other capabilities have been
     # allocated
     for i in assembly.composition.instances:
-        # Don't generate any code for hardware components.
-        if i.type.hardware:
+        if not conf[i.name].get('all_tcb_caps'):
             continue
         assert i.address_space in cspaces
+
+        # Give all tcbs to this component
+        cs = cspaces[i.address_space]
+        slots = []
+        for obj in sorted(obj_space.spec.objs, key=lambda o: o.name):
+            if isinstance(obj, Object.TCB):
+                slot = cs.alloc(obj)
+                slots.append(slot)
+                cap = cs.cnode[slot]
+                cap.external_tcb = True
+        cs.all_tcb_caps_slots = slots
+        
         for t in ('%s/all_tcb_caps' % i.name,):
             try:
                 template = templates.lookup(t, i)
